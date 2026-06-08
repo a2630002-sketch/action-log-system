@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#111827" />
+  <title>行動ログ入力システム</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">Action Log</p>
+      <h1>行動ログ入力</h1>
+    </div>
+    <button id="logoutBtn" class="ghost hidden" type="button">ログアウト</button>
+  </header>
+
+  <main>
+    <section id="authView" class="card auth-card">
+      <h2>ログイン</h2>
+      <p class="muted">IDとパスワードはこの端末内でのみ照合されます。ログはパスワードから作った鍵で暗号化して保存します。</p>
+      <form id="authForm">
+        <label>ID <span>8文字以上・英数字</span>
+          <input id="userId" autocomplete="username" inputmode="latin" pattern="[A-Za-z0-9]{8,}" minlength="8" required placeholder="例: abc12345" />
+        </label>
+        <label>パスワード <span>12文字以上</span>
+          <input id="password" type="password" autocomplete="current-password" minlength="12" required placeholder="12文字以上" />
+        </label>
+        <div class="row">
+          <button id="loginBtn" class="primary" type="submit">ログイン / 初回登録</button>
+        </div>
+      </form>
+      <details>
+        <summary>安全性について</summary>
+        <p>GitHub Pagesだけで公開するため、サーバー側の本人確認やIDの全世界一意性チェックはできません。代わりに、端末内の暗号化保存にしています。複数端末同期が必要な場合はFirebase/Supabase等のバックエンドを追加してください。</p>
+      </details>
+      <p id="authMessage" class="message"></p>
+    </section>
+
+    <section id="appView" class="hidden">
+      <section class="card today-card">
+        <div class="today-top">
+          <div>
+            <p class="eyebrow">Today</p>
+            <h2 id="todayLabel"></h2>
+          </div>
+          <div class="streak">
+            <span id="streakCount">0</span><small>日連続</small>
+          </div>
+        </div>
+        <p id="gentleMessage" class="muted"></p>
+      </section>
+
+      <section class="card">
+        <h2>10秒ログ</h2>
+        <form id="logForm">
+          <label>今やったこと
+            <input id="activity" list="activityList" required placeholder="例: 研究 / 就活 / 家事 / 休憩" />
+            <datalist id="activityList">
+              <option value="研究"></option><option value="就活"></option><option value="授業・課題"></option><option value="家事"></option><option value="予定管理"></option><option value="休憩"></option><option value="睡眠"></option><option value="スマホ・動画"></option>
+            </datalist>
+          </label>
+          <div class="grid2">
+            <label>開始
+              <input id="startTime" type="time" required />
+            </label>
+            <label>終了
+              <input id="endTime" type="time" required />
+            </label>
+          </div>
+          <label>実行できた度 <span id="doneValue">3</span>/5
+            <input id="done" type="range" min="1" max="5" value="3" />
+          </label>
+          <label>気分 <span id="moodValue">3</span>/5
+            <input id="mood" type="range" min="1" max="5" value="3" />
+          </label>
+          <label>つまずき要因
+            <select id="blocker">
+              <option value="なし">なし</option>
+              <option value="疲労・眠気">疲労・眠気</option>
+              <option value="興味が湧かない">興味が湧かない</option>
+              <option value="予定の競合・急用">予定の競合・急用</option>
+              <option value="タスクが曖昧">タスクが曖昧</option>
+              <option value="スマホ・動画">スマホ・動画</option>
+              <option value="不安・恥への恐れ">不安・恥への恐れ</option>
+              <option value="生活管理・忘れ物">生活管理・忘れ物</option>
+            </select>
+          </label>
+          <label>次の最小行動
+            <input id="nextAction" placeholder="例: Notionを開くだけ / ESを1文だけ書く" />
+          </label>
+          <button class="primary wide" type="submit">記録する</button>
+        </form>
+        <div class="quick-actions">
+          <button type="button" data-quick="研究">研究を開始</button>
+          <button type="button" data-quick="就活">就活を開始</button>
+          <button type="button" data-quick="予定管理">予定管理</button>
+          <button type="button" data-quick="休憩">休憩</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <h2>今日のログ</h2>
+          <button id="clearTodayBtn" class="danger ghost" type="button">今日分を削除</button>
+        </div>
+        <div id="logList" class="log-list"></div>
+      </section>
+
+      <section class="card">
+        <h2>ふり返り</h2>
+        <div class="stats">
+          <div><strong id="todayMinutes">0</strong><span>今日の記録分</span></div>
+          <div><strong id="weekEntries">0</strong><span>7日間の件数</span></div>
+          <div><strong id="topBlocker">-</strong><span>多い要因</span></div>
+        </div>
+        <p id="reflectionHint" class="hint"></p>
+      </section>
+
+      <section class="card">
+        <h2>データ管理</h2>
+        <div class="row wrap">
+          <button id="exportJsonBtn" type="button">JSON出力</button>
+          <button id="exportCsvBtn" type="button">CSV出力</button>
+          <label class="file-label">JSON読込<input id="importJson" type="file" accept="application/json" /></label>
+        </div>
+        <p class="muted small">研究や自己分析に使う場合は、定期的にJSON/CSVで保存してください。</p>
+      </section>
+    </section>
+  </main>
+
+  <template id="logTemplate">
+    <article class="log-item">
+      <div><strong class="log-activity"></strong><p class="log-meta"></p><p class="log-next"></p></div>
+      <button class="delete-log ghost danger" type="button">削除</button>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
